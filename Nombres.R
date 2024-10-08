@@ -143,6 +143,12 @@ contagio <- function(dfNombres, infectados){
 dfNombres$Infectado <- FALSE
 dfNombres$Infectado[1] <- TRUE
 dfNombres <- contagio(dfNombres, 1)
+#Se tuvo que cambiar el numero de registros ya que al usar recursividad en tantos registro
+#puede causar errores 
+#Error: evaluation nested too deeply: infinite recursion / options(expressions=)?
+#Error durante el wrapup: evaluation nested too deeply: infinite recursion / options(expressions=)?
+#Error: no more error handlers available (recursive errors?); invoking 'abort' restart
+#para evitar esto seria mejor usar un bucle
 print(dfNombres)
 
 
