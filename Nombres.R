@@ -70,7 +70,7 @@ apellidos <- c(
   "Lloyd", "Marshall", "Mason", "Mathews", "McCarthy", "McDonald", "McGee", "Moore", "Morgan", "Morris"
 )
 #nombres completos de hombres
-n <- 100000
+n <- 100
 v_nombres_masc1 <- sample(nombres_hombres, n, replace = T)
 v_nombres_masc2 <- sample(nombres_hombres, n, replace = T)
 v_apellidos_masc1 <- sample(apellidos, n, replace = T)
@@ -82,7 +82,7 @@ v_apellidos_masc2 <- sample(apellidos, n, replace = T)
 nom_completo_masc <- paste(v_nombres_masc1, v_nombres_masc2,
                            v_apellidos_masc1, v_apellidos_masc2)
 
-#nombres completos de mentirosotas
+#nombres completos de mujeres
 v_nombres_fem1 <- sample(nombres_mujeres, n, replace = T)
 v_nombres_fem2 <- sample(nombres_mujeres, n, replace = T)
 v_apellidos_fem1 <- sample(apellidos, n, replace = T)
@@ -120,35 +120,42 @@ correos_fem <- sapply(nom_completo_fem_lim, crear_correo)
 genero_masc <- rep("Hombre", length(correos_masc))
 genero_fem <- rep("Mujer", length(correos_fem))
 
-contagios <- sample(c(TRUE, FALSE), n, replace = T, prob = c(0.7,1))
+#contagios <- sample(c(TRUE, FALSE), n, replace = T, prob = c(0.7,1))
 
-result_contaguio <- ifelse(contagios, "Infectado", "Sano")
+#result_contaguio <- ifelse(contagios, "Infectado", "Sano")
 
-df_correos <- data.frame(
+dfNombres <- data.frame(
   Nombre = c(nom_completo_masc_lim, nom_completo_fem_lim),
   Genero = c(genero_masc, genero_fem),
-  Correo = c(correos_masc, correos_fem),
-  Contagio = c(result_contaguio)
+  Correo = c(correos_masc, correos_fem)
+  #Contagio = c(result_contaguio)
 )
 
-tasa_contagios <- 0.2
-poblacion_total <- nrow(df_correos)
-
-propagacion <- function(df, tasa_contagios){
-  dias <- 0
-  while(sum(df$Contagio == "Infectado") < nrow(df)){
-    nuevos_infectados <- sum(df$Contagio == "Infectado")
-    sanos <- which(df$Contagio == "Sano")
-    if(nuevos_infectados > length(sanos)){
-      nuevos_infectados <- length(sanos)
-    }
-    a_infectar <- sample(sanos, nuevos_infectados)
-    df$Contagio[a_infectar] <- "Infectado"
-    dias <- dias + 1
+contagio <- function(dfNombres, infectados){
+  if(infectados >= nrow(dfNombres)){
+    return(dfNombres)
+  } else {
+    dfNombres$Infectado[infectados + 1] <- T
+    return(contagio(dfNombres, infectados + 1))
   }
-  return(dias)
 }
 
-tiempo_total <- propagacion(df_correos, tasa_contagios)
+dfNombres$Infectado <- FALSE
+dfNombres$Infectado[1] <- TRUE
+dfNombres <- contagio(dfNombres, 1)
+print(dfNombres)
 
-print(paste("La poblacion total se infecto en: ", tiempo_total, "dias"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
