@@ -1,7 +1,7 @@
-# Vector de 200 nombres masculinos Ãºnicos
+# Vector de 200 nombres masculinos únicos
 nombres_hombres <- c(
   "Aaron", "Abel", "Abraham", "Adam", "Adrian", "Aiden", "Alan", "Albert", "Alec", "Alexander",
-  "Alfred", "AndrÃ©", "AndrÃ©s", "Angelo", "Anthony", "Antonio", "Arthur", "Asher", "Austin", "Benjamin",
+  "Alfred", "Andre", "Andres", "Angelo", "Anthony", "Antonio", "Arthur", "Asher", "Austin", "Benjamin",
   "Bernard", "Blake", "Boris", "Brad", "Brandon", "Brian", "Bruce", "Bryan", "Caleb", "Cameron",
   "Carl", "Carlos", "Charles", "Christian", "Christopher", "Claude", "Clyde", "Colin", "Connor", "Daniel",
   "David", "Dean", "Dennis", "Dominic", "Dorian", "Douglas", "Dylan", "Edward", "Eli", "Elijah",
@@ -22,7 +22,7 @@ nombres_hombres <- c(
   "Mason", "Max", "Micah", "Nolan", "Owen", "Parker", "Paul", "Quinn", "Riley", "Robert"
 )
 
-# Vector de 200 nombres femeninos Ãºnicos
+# Vector de 200 nombres femeninos únicos
 nombres_mujeres <- c(
   "Ada", "Adele", "Adriana", "Aileen", "Aisha", "Alicia", "Amara", "Amelia", "Ana", "Andrea",
   "Angela", "Anna", "Ariana", "Astrid", "Aurora", "Beatrice", "Bella", "Bianca", "Blanca", "Brianna",
@@ -46,7 +46,7 @@ nombres_mujeres <- c(
   "Dakota", "Delilah", "Destiny", "Eliana", "Ella", "Emery", "Estelle", "Fiona", "Gemma", "Hannah"
 )
 
-# Vector de 200 apellidos Ãºnicos
+# Vector de 200 apellidos únicos
 apellidos <- c(
   "Adams", "Allen", "Anderson", "Armstrong", "Baker", "Bates", "Bell", "Bennett", "Benson", "Berg",
   "Black", "Blake", "Bond", "Booth", "Bowers", "Boyd", "Bradley", "Brooks", "Brown", "Bryant",
@@ -70,7 +70,8 @@ apellidos <- c(
   "Lloyd", "Marshall", "Mason", "Mathews", "McCarthy", "McDonald", "McGee", "Moore", "Morgan", "Morris"
 )
 #nombres completos de hombres
-n <- 100
+n <- 10
+
 v_nombres_masc1 <- sample(nombres_hombres, n, replace = T)
 v_nombres_masc2 <- sample(nombres_hombres, n, replace = T)
 v_apellidos_masc1 <- sample(apellidos, n, replace = T)
@@ -120,9 +121,9 @@ correos_fem <- sapply(nom_completo_fem_lim, crear_correo)
 genero_masc <- rep("Hombre", length(correos_masc))
 genero_fem <- rep("Mujer", length(correos_fem))
 
-#contagios <- sample(c(TRUE, FALSE), n, replace = T, prob = c(0.7,1))
+contagios <- sample(c(TRUE, FALSE), n, replace = T, prob = c(0.7,1))
 
-#result_contaguio <- ifelse(contagios, "Infectado", "Sano")
+result_contaguio <- ifelse(contagios, "Infectado", "Sano")
 
 dfNombres <- data.frame(
   Nombre = c(nom_completo_masc_lim, nom_completo_fem_lim),
@@ -131,37 +132,34 @@ dfNombres <- data.frame(
   #Contagio = c(result_contaguio)
 )
 
-contagio <- function(dfNombres, infectados){
+contagio <- function(dfNombres, infectados, probabilidad){
   if(infectados >= nrow(dfNombres)){
-    return(dfNombres)
+    return(dfNombres$Infectado)
   } else {
-    dfNombres$Infectado[infectados + 1] <- T
-    return(contagio(dfNombres, infectados + 1))
+    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
+    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
+      dfNombres$Infectado[infectados + 1] <- T
+    }
+    Sys.sleep(1)
+    return(contagio(dfNombres, infectados + 1, probabilidad))
   }
 }
 
+contagioB <- function (dfNombres, probabilidad){
+  infectados <- 1
+  while (infectados <= nrow(dfNombres)){
+    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
+    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
+      dfNombres$Infectado[infectados + 1] <- T
+    }
+    infectados <- infectados + 1
+    Sys.sleep(1)
+  }
+  return(dfNombres)
+}
+
 dfNombres$Infectado <- FALSE
-dfNombres$Infectado[1] <- TRUE
-dfNombres <- contagio(dfNombres, 1)
-#Se tuvo que cambiar el numero de registros ya que al usar recursividad en tantos registro
-#puede causar errores 
-#Error: evaluation nested too deeply: infinite recursion / options(expressions=)?
-#Error durante el wrapup: evaluation nested too deeply: infinite recursion / options(expressions=)?
-#Error: no more error handlers available (recursive errors?); invoking 'abort' restart
-#para evitar esto seria mejor usar un bucle
-print(dfNombres)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+dfNombres$Infectado[5] <- TRUE
+probabilidad <- 0.9
+dfNombres <- contagioB(dfNombres, probabilidad)
+cat(paste0("|",dfNombres$Infectado, "|\n"), "|-----|\n \n")
