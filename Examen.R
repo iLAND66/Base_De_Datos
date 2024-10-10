@@ -1,4 +1,4 @@
-# Vector de 200 nombres masculinos únicos
+# Vector de 200 nombres masculinos Ãºnicos
 nombres_hombres <- c(
   "Aaron", "Abel", "Abraham", "Adam", "Adrian", "Aiden", "Alan", "Albert", "Alec", "Alexander",
   "Alfred", "Andre", "Andres", "Angelo", "Anthony", "Antonio", "Arthur", "Asher", "Austin", "Benjamin",
@@ -22,7 +22,7 @@ nombres_hombres <- c(
   "Mason", "Max", "Micah", "Nolan", "Owen", "Parker", "Paul", "Quinn", "Riley", "Robert"
 )
 
-# Vector de 200 nombres femeninos únicos
+# Vector de 200 nombres femeninos Ãºnicos
 nombres_mujeres <- c(
   "Ada", "Adele", "Adriana", "Aileen", "Aisha", "Alicia", "Amara", "Amelia", "Ana", "Andrea",
   "Angela", "Anna", "Ariana", "Astrid", "Aurora", "Beatrice", "Bella", "Bianca", "Blanca", "Brianna",
@@ -46,7 +46,7 @@ nombres_mujeres <- c(
   "Dakota", "Delilah", "Destiny", "Eliana", "Ella", "Emery", "Estelle", "Fiona", "Gemma", "Hannah"
 )
 
-# Vector de 200 apellidos únicos
+# Vector de 200 apellidos Ãºnicos
 apellidos <- c(
   "Adams", "Allen", "Anderson", "Armstrong", "Baker", "Bates", "Bell", "Bennett", "Benson", "Berg",
   "Black", "Blake", "Bond", "Booth", "Bowers", "Boyd", "Bradley", "Brooks", "Brown", "Bryant",
@@ -72,24 +72,24 @@ apellidos <- c(
 
 n <- 10
 
-nombreCompleto <- function(nombres_hombres, nombres_mujeres, apellidos, n, genero = "Masculino") {
+nombreCompleto <- function(nombres_hombres, nombres_mujeres, apellidos, n) {
   # Inicializar la probabilidad de contagio
   probabilidad <- 0.9
-
+  
   # Inicializar el data frame
-  dfNombres <- data.frame(Nombre = character(n),
-                          Correo = character(n),
-                          Genero = character(n),
+  dfNombres <- data.frame(Nombre = character(n * 2),
+                          Correo = character(n * 2),
+                          Genero = character(n * 2),
                           Infectado = FALSE,
                           stringsAsFactors = FALSE)
-
-  # Función de contagio anidada
+  
+  # FunciÃ³n de contagio anidada
   contagio <- function(dfNombres, infectados, probabilidad) {
     if (infectados >= nrow(dfNombres)) {
       return(dfNombres)
     } else {
       cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
-
+      
       if (runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]) {
         dfNombres$Infectado[infectados + 1] <- TRUE
       }
@@ -97,39 +97,49 @@ nombreCompleto <- function(nombres_hombres, nombres_mujeres, apellidos, n, gener
       return(contagio(dfNombres, infectados + 1, probabilidad))
     }
   } # fin contagio
-
-  # Selección de nombres según el género
-  if (genero == "Masculino") {
-    nombres <- nombres_hombres
-  } else if (genero == "Femenino") {
-    nombres <- nombres_mujeres
-  } else {
-    stop("género no válido. Debe ser Masculino o Femenino.")
-  }
-
-  # Generación de nombres y apellidos
+  
+  # GeneraciÃ³n de nombres para hombres
   for (i in 1:n) {
-    dfNombres$Nombre[i] <- paste(sample(nombres, 2), collapse = " ")  # Dos nombres
+    # Dos nombres y apellidos para hombres
+    dfNombres$Nombre[i] <- paste(sample(nombres_hombres, 2), collapse = " ")  # Dos nombres
     dfNombres$PrimerApellido[i] <- sample(apellidos, 1)
     dfNombres$SegundoApellido[i] <- sample(apellidos, 1)
-    dfNombres$Correo[i] <- tolower(paste0(substr(dfNombres$Nombre[i], 1, 1),
-                                           dfNombres$PrimerApellido[i],
-                                           substr(dfNombres$SegundoApellido[i], 1, 1),
+    dfNombres$Correo[i] <- tolower(paste0(substr(dfNombres$Nombre[i], 1, 1), 
+                                           dfNombres$PrimerApellido[i], 
+                                           substr(dfNombres$SegundoApellido[i], 1, 1), 
                                            "@ipn.mx"))
+    dfNombres$Genero[i] <- "Masculino"
   }
-
+  
+  # GeneraciÃ³n de nombres para mujeres
+  for (i in (n + 1):(n * 2)) {
+    # Dos nombres y apellidos para mujeres
+    dfNombres$Nombre[i] <- paste(sample(nombres_mujeres, 2), collapse = " ")  # Dos nombres
+    dfNombres$PrimerApellido[i] <- sample(apellidos, 1)
+    dfNombres$SegundoApellido[i] <- sample(apellidos, 1)
+    dfNombres$Correo[i] <- tolower(paste0(substr(dfNombres$Nombre[i], 1, 1), 
+                                           dfNombres$PrimerApellido[i], 
+                                           substr(dfNombres$SegundoApellido[i], 1, 1), 
+                                           "@ipn.mx"))
+    dfNombres$Genero[i] <- "Femenino"
+  }
+  
   # Iniciar contagio desde la primera persona
   dfNombres <- contagio(dfNombres, 0, probabilidad)
-
+  
   return(dfNombres)
 } # fin nombreCompleto
 
-nombresHombresCompletos <- nombreCompleto(nombres_hombres, apellidos, nombres_mujeres, n, "Masculino")
-nombresMujeresCompletos <- nombreCompleto(nombres_hombres, nombres_mujeres, apellidos, n, "Femenino")
-head(nombresHombresCompletos)
-head(nombresMujeresCompletos)
-head(nombreCompleto(dfNombres))
-baseDeDatos <- contagio(nombresHombresCompletos, probabilidad)
-cat(paste0("|",baseDeDatos$Infectado, "|\n"), "|-----|\n \n")
+# Ejemplo de uso
+nombres_hombres <- c("Juan", "Carlos", "Pedro", "Jorge", "Luis")
+nombres_mujeres <- c("Ana", "Maria", "LucÃ­a", "Elena", "SofÃ­a")
+apellidos <- c("GarcÃ­a", "PÃ©rez", "LÃ³pez", "MartÃ­nez", "RodrÃ­guez")
+n <- 10  # NÃºmero total de personas
+
+# Generar nombres completos combinados y contagios
+nombresCompletos <- nombreCompleto(nombres_hombres, nombres_mujeres, apellidos, n)
+
+# Mostrar los resultados
+head(nombresCompletos)
 
 
