@@ -121,45 +121,40 @@ correos_fem <- sapply(nom_completo_fem_lim, crear_correo)
 genero_masc <- rep("Hombre", length(correos_masc))
 genero_fem <- rep("Mujer", length(correos_fem))
 
-contagios <- sample(c(TRUE, FALSE), n, replace = T, prob = c(0.7,1))
-
-result_contaguio <- ifelse(contagios, "Infectado", "Sano")
-
 dfNombres <- data.frame(
   Nombre = c(nom_completo_masc_lim, nom_completo_fem_lim),
   Genero = c(genero_masc, genero_fem),
   Correo = c(correos_masc, correos_fem)
-  #Contagio = c(result_contaguio)
 )
 
 contagio <- function(dfNombres, infectados, probabilidad){
   if(infectados >= nrow(dfNombres)){
-    return(dfNombres$Infectado)
+    return(dfNombres)
   } else {
-    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
+    cat(paste0("|", paste(dfNombres$Infectado), "|\n"), "|-----|\n")
     if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
-      dfNombres$Infectado[infectados + 1] <- T
+      dfNombres$Infectado[infectados + 1] <- TRUE
     }
-    Sys.sleep(1)
+    Sys.sleep(0.3)
     return(contagio(dfNombres, infectados + 1, probabilidad))
   }
 }
 
-contagioB <- function (dfNombres, probabilidad){
-  infectados <- 1
-  while (infectados <= nrow(dfNombres)){
-    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
-    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
-      dfNombres$Infectado[infectados + 1] <- T
-    }
-    infectados <- infectados + 1
-    Sys.sleep(1)
-  }
-  return(dfNombres)
-}
+#contagioB <- function (dfNombres, probabilidad){
+#  infectados <- 1
+#  while (infectados <= nrow(dfNombres)){
+#    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
+#    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
+#      dfNombres$Infectado[infectados + 1] <- T
+#    }
+#    infectados <- infectados + 1
+#    Sys.sleep(1)
+#  }
+#  return(dfNombres)
+#}
 
 dfNombres$Infectado <- FALSE
-dfNombres$Infectado[5] <- TRUE
-probabilidad <- 0.9
-dfNombres <- contagioB(dfNombres, probabilidad)
-cat(paste0("|",dfNombres$Infectado, "|\n"), "|-----|\n \n")
+probabilidad <- 0.99
+
+dfNombres <- contagio(dfNombres, 0, probabilidad)
+print(dfNombres)
