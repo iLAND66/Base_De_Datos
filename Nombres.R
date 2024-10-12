@@ -129,16 +129,23 @@ dfNombres <- data.frame(
 
 contagio <- function(dfNombres, infectados, probabilidad){
   if(infectados >= nrow(dfNombres)){
-    return(dfNombres)
+    if(any(!dfNombres$Infectado)){
+      return(contagio(dfNombres, 0, probabilidad))
+    } else {
+      cat("La poblacion total a sido infectada ?\n")
+      return(dfNombres)
+    }
   } else {
-    cat(paste0("|", paste(dfNombres$Infectado), "|\n"), "|-----|\n")
+    if(any(!dfNombres$Infectado))
+      cat(paste0("|", paste(dfNombres$Infectado), "|\n"), "|-----|\n")
     if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
       dfNombres$Infectado[infectados + 1] <- TRUE
     }
-    Sys.sleep(0.3)
+#    Sys.sleep(0.1)
     return(contagio(dfNombres, infectados + 1, probabilidad))
   }
 }
+
 
 #contagioB <- function (dfNombres, probabilidad){
 #  infectados <- 1
@@ -154,7 +161,7 @@ contagio <- function(dfNombres, infectados, probabilidad){
 #}
 
 dfNombres$Infectado <- FALSE
-probabilidad <- 0.99
+probabilidad <- 0.5
 
 dfNombres <- contagio(dfNombres, 0, probabilidad)
 print(dfNombres)
