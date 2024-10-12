@@ -70,7 +70,7 @@ apellidos <- c(
   "Lloyd", "Marshall", "Mason", "Mathews", "McCarthy", "McDonald", "McGee", "Moore", "Morgan", "Morris"
 )
 #nombres completos de hombres
-n <- 10
+n <- 100
 
 v_nombres_masc1 <- sample(nombres_hombres, n, replace = T)
 v_nombres_masc2 <- sample(nombres_hombres, n, replace = T)
