@@ -70,7 +70,7 @@ apellidos <- c(
   "Lloyd", "Marshall", "Mason", "Mathews", "McCarthy", "McDonald", "McGee", "Moore", "Morgan", "Morris"
 )
 #nombres completos de hombres
-n <- 100
+n <- 50
 
 v_nombres_masc1 <- sample(nombres_hombres, n, replace = T)
 v_nombres_masc2 <- sample(nombres_hombres, n, replace = T)
@@ -127,41 +127,37 @@ dfNombres <- data.frame(
   Correo = c(correos_masc, correos_fem)
 )
 
-contagio <- function(dfNombres, infectados, probabilidad){
+contagio <- function(dfNombres, infectados, probabilidad, probCura, probReinfeccion, probInmune, probMuerte){
   if(infectados >= nrow(dfNombres)){
-    if(any(!dfNombres$Infectado)){
-      return(contagio(dfNombres, 0, probabilidad))
+    if(any(dfNombres$Infectado == "No infectado")){
+      return(contagio(dfNombres, 0, probabilidad, probCura, probReinfeccion, probInmune, probMuerte))
     } else {
       cat("La poblacion total a sido infectada ?\n")
       return(dfNombres)
     }
   } else {
-    if(any(!dfNombres$Infectado))
-      cat(paste0("|", paste(dfNombres$Infectado), "|\n"), "|-----|\n")
-    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
-      dfNombres$Infectado[infectados + 1] <- TRUE
+      cat(paste0("|", paste(dfNombres$Infectado), "|\n"), "|-----------|\n")
+    if(runif(1) < probabilidad && dfNombres$Infectado[infectados + 1] == "No infectado")
+      dfNombres$Infectado[infectados + 1] <- " Infectado "
+    else if(runif(1) < probCura && dfNombres$Infectado[infectados + 1] == "No infectado")
+      dfNombres$Infectado[infectados + 1] <- "  Curado   "
+    else if(runif(1) < probReinfeccion && dfNombres$Infectado[infectados + 1] == "No infectado")
+      dfNombres$Infectado[infectados + 1] <- "Reinfectado"
+    else if(runif(1) < probInmune && dfNombres$Infectado[infectados + 1] == "No infectado")
+      dfNombres$Infectado[infectados + 1] <- "  Inmune   "
+    else if(runif(1) < probMuerte && dfNombres$Infectado[infectados + 1] == "No infectado")
+      dfNombres$Infectado[infectados + 1] <- "  Muerto   "
     }
 #    Sys.sleep(0.1)
-    return(contagio(dfNombres, infectados + 1, probabilidad))
+    return(contagio(dfNombres, infectados + 1, probabilidad, probCura, probReinfeccion, probInmune, probMuerte))
   }
-}
 
+dfNombres$Infectado <- "No infectado"
+probabilidad <- 0.6
+probCura <- 0.5
+probReinfeccion <- 0.3
+probInmune <- 0.2
+probMuerte <- 0.4
 
-#contagioB <- function (dfNombres, probabilidad){
-#  infectados <- 1
-#  while (infectados <= nrow(dfNombres)){
-#    cat(paste0("|", dfNombres$Infectado, "|\n"), "|-----|\n \n")
-#    if(runif(1) < probabilidad && !dfNombres$Infectado[infectados + 1]){
-#      dfNombres$Infectado[infectados + 1] <- T
-#    }
-#    infectados <- infectados + 1
-#    Sys.sleep(1)
-#  }
-#  return(dfNombres)
-#}
-
-dfNombres$Infectado <- FALSE
-probabilidad <- 0.5
-
-dfNombres <- contagio(dfNombres, 0, probabilidad)
+dfNombres <- contagio(dfNombres, 0, probabilidad, probCura, probReinfeccion, probInmune, probMuerte)
 print(dfNombres)
