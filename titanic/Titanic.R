@@ -32,7 +32,7 @@ table(data.combined$Survived)
 table(data.combined$Pclass)
 
 #para hacer algunas gráficas
-#install.packages("ggplot2")
+install.packages("ggplot2")
 library(ggplot2)
 
 #Nuestra hipótesis de investigación es que sobrevivieron
