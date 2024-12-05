@@ -1,3 +1,15 @@
+train<-read.csv("train.csv",header = T)
+test<-read.csv("test.csv",header = T)
+
+#creamos una base de datos para trabajar con ella porque
+#le falta la variable survived
+test.survived<-data.frame(Survived=rep("None",nrow(test)),test)
+
+data.combined<-rbind(train,test.survived)
+
+test.survived<-data.frame(Mr=rep("None",nrow(test)),test)
+test.survived<-data.frame(Mrs=rep("None",nrow(test)),test)
+
 analisisDeTablas <- function (columna1, columna2) {
   tabla <- table(columna1,columna2)
   sumValores <- c(sum(tabla[1,]),sum(tabla[2,]),sum(tabla[3,]))
@@ -21,37 +33,88 @@ analisisDeTablas <- function (columna1, columna2) {
   }
 }
 
-analisisDeTablas(train$Pclass, train$Survived)
-analisisDeTablas(train$Pclass, train$Sex)
+clasificar_personas <- function(data) {
+  data <- data %>%
+    mutate(
+      Mr = ifelse(Sex == "male" & Age >= 14, 1, 0), # Hombres >= 14 años
+      Mrs = ifelse(Sex == "female" & grepl("Mrs\\.", Name), 1, 0) # Mujeres con "Mrs." en el nombre
+    )
+  return(data)
+}
+
+test.survived <- analisisDeTablas(train$Pclass, train$Survived)
+test.survived <- analisisDeTablas(train$Pclass, train$Sex)
+
+head(test.survived)
 
 
+####
+#Desglose de los cambios:
+#Clasificación de "Mr" y "Mrs":
 
-#definimos una tabla usando las columnas pclas y survived
-tabla <- table(train$Pclass,train$Survived)
-#creamos un vector que va a sumar las filas de los valores de nuestra tabla
-sumValores <- c(sum(tabla[1,]),sum(tabla[2,]),sum(tabla[3,]))
-#definimos nuestra probabilidad dividiendo nuestra tabla sobre suma de las filas
-probabilidad <- tabla/sumValores
+#Mr: Se identifican como hombres (Sex == "male") de 14 años o más (Age >= 14).
+#Mrs: Se identifican como mujeres (Sex == "female") con "Mrs." en el nombre.
+#Análisis de tablas:
 
-#definimos otra tabla de nuestro df test.survived
-tablaSobrevivientes <-table(test.survived$Pclass,test.survived$Survived)
-#convertimos la tabla a matriz usando []
-tablaSobrevivientes[1]
-#cambiamos los valores a ceros y unos
-valores <- 0:1
+#Calcula las probabilidades condicionales para las combinaciones de las columnas proporcionadas (Pclass y Survived, Pclass y Sex).
+#Los resultados se agregan al DataFrame como columnas con nombres descriptivos.
+#Estructura limpia:
 
-sample(valores,tablaSobrevivientes[1],replace = T,prob =probabilidad[1,])
-sample(valores,tablaSobrevivientes[2],replace = T,prob =probabilidad[2,])
-sample(valores,tablaSobrevivientes[3],replace = T,prob =probabilidad[3,])
+#Uso de dplyr para transformar y agregar columnas al DataFrame con claridad y menos código redundante.
+#Compatibilidad con datos de prueba:
 
-#hacer lo mismo usando pclass y sex
-tablaClasSex <- table(train$Pclass, train$Sex)
-sumValores <- c(sum(tablaClasSex[1,]),sum(tablaClasSex[2,]),sum(tablaClasSex[3,]))
-proba <- tablaClasSex/sumValores
+#Se asegura que el conjunto de prueba mantenga las mismas columnas para futuras predicciones o análisis.
+#Resultado:
+#El DataFrame tendrá columnas adicionales:
 
-tablaClasSex2 <- tablaClasSex
-tablaClasSex2[1]
-valoresClSe <- 0:1
-sample(valoresClSe, tablaClasSex2[1], replace = T, prob = proba[1,])
-sample(valoresClSe, tablaClasSex2[2], replace = T, prob = proba[2,])
-sample(valoresClSe, tablaClasSex2[3], replace = T, prob = proba[3,])
+#Mr: Indica si un pasajero es "Mr".
+#Mrs: Indica si un pasajero es "Mrs".
+#Probabilidades calculadas por el análisis de tablas, como Survived_Clase1, Sexo_Clase1, etc.
+library(dplyr)
+
+# Cargar los datos
+train <- read.csv("train.csv", header = TRUE)
+test <- read.csv("test.csv", header = TRUE)
+
+# Agregar columnas iniciales para Survived, Mr, y Mrs al conjunto de prueba
+test <- test %>%
+  mutate(Survived = "None", Mr = 0, Mrs = 0)
+
+# Función para identificar "Mr" y "Mrs" en base a las condiciones dadas
+clasificar_personas <- function(data) {
+  data <- data %>%
+    mutate(
+      Mr = ifelse(Sex == "male" & Age >= 14, 1, 0), # Hombres >= 14 años
+      Mrs = ifelse(Sex == "female" & grepl("Mrs\\.", Name), 1, 0) # Mujeres con "Mrs." en el nombre
+    )
+  return(data)
+}
+
+# Aplicar la clasificación a los datos de entrenamiento y prueba
+train <- clasificar_personas(train)
+test <- clasificar_personas(test)
+
+# Función para realizar el análisis de tablas y agregar resultados como columnas
+analisisDeTablas <- function(data, columna1, columna2, nombre_columna) {
+  tabla <- table(columna1, columna2)
+  probabilidad <- prop.table(tabla, margin = 1)
+
+  # Agregar probabilidades al DataFrame
+  data <- data %>%
+    mutate(
+      paste0(nombre_columna, "_Clase1") = probabilidad[1, 2],
+      paste0(nombre_columna, "_Clase2") = probabilidad[2, 2],
+      paste0(nombre_columna, "_Clase3") = probabilidad[3, 2]
+    )
+
+  return(data)
+}
+
+# Agregar los resultados de análisis de tablas al DataFrame de entrenamiento
+train <- analisisDeTablas(train, train$Pclass, train$Survived, "Survived")
+train <- analisisDeTablas(train, train$Pclass, train$Sex, "Sexo")
+
+# Vista previa del DataFrame final
+head(train)
+head(test)
+
