@@ -5,116 +5,91 @@ test<-read.csv("test.csv",header = T)
 #le falta la variable survived
 test.survived<-data.frame(Survived=rep("None",nrow(test)),test)
 
-data.combined<-rbind(train,test.survived)
+#data.combined<-rbind(train,test.survived)
 
-test.survived<-data.frame(Mr=rep("None",nrow(test)),test)
-test.survived<-data.frame(Mrs=rep("None",nrow(test)),test)
+analisisDeTablas <- function (columna1, columna2, df) {
+  tabla <- table(columna1, columna2)
+  sumValores <- c(sum(tabla[1,]), sum(tabla[2,]), sum(tabla[3,]))
+  probabilidad <- tabla / sumValores
+  resultados <- numeric(nrow(df))  # Inicializar un vector para los resultados
 
-analisisDeTablas <- function (columna1, columna2) {
-  tabla <- table(columna1,columna2)
-  sumValores <- c(sum(tabla[1,]),sum(tabla[2,]),sum(tabla[3,]))
-  probabilidad <- tabla/sumValores
   if (identical(columna2, train$Survived)) {
-    tablaSobrevivientes <- table(test.survived$Pclass, test.survived$Survived)
-    tablaSobrevivientes[1]
+    tablaSobrevivientes <- table(df$Pclass, df$Survived)
     valores <- 0:1
-    print(sample(valores,tablaSobrevivientes[1],replace = T,prob =probabilidad[1,]))
-    cat("\n")
-    print(sample(valores,tablaSobrevivientes[2],replace = T,prob =probabilidad[2,]))
-    cat("\n")
-    print(sample(valores,tablaSobrevivientes[3],replace = T,prob =probabilidad[3,]))
+    for (i in 1:3) {
+      # Asegurarse de que la longitud coincida con el número de filas que cumplen la condición
+      num_elementos <- sum(df$Pclass == i)
+      if (num_elementos > 0) {
+        resultados[df$Pclass == i] <- sample(valores, num_elementos, replace = TRUE, prob = probabilidad[i,])
+      }
+    }
   } else {
     valores <- 0:1
-    print(sample(valores, tabla[1], replace = T, prob = probabilidad[1,]))
-    cat("\n")
-    print(sample(valores, tabla[2], replace = T, prob = probabilidad[2,]))
-    cat("\n")
-    print(sample(valores, tabla[3], replace = T, prob = probabilidad[3,]))
+    for (i in 1:3) {
+      num_elementos <- sum(df$Pclass == i)
+      if (num_elementos > 0) {
+        resultados[df$Pclass == i] <- sample(valores, num_elementos, replace = TRUE, prob = probabilidad[i,])
+      }
+    }
   }
+  return(resultados)
 }
 
-clasificar_personas <- function(data) {
-  data <- data %>%
-    mutate(
-      Mr = ifelse(Sex == "male" & Age >= 14, 1, 0), # Hombres >= 14 años
-      Mrs = ifelse(Sex == "female" & grepl("Mrs\\.", Name), 1, 0) # Mujeres con "Mrs." en el nombre
-    )
-  return(data)
+analizarMrPorClase <- function(data) {
+  # Verificar si el nombre contiene "Mr." y si la edad es mayor a 14 años
+  cumpleCondicion <- grepl("Mr\\.", data$Name) & data$Age > 14
+
+  # Crear una tabla con las clases existentes y la cantidad total de personas por clase
+  tabla <- table(data$Pclass)
+
+  # Calcular la probabilidad de cumplir la condición para cada clase
+  probabilidadCumple <- tapply(cumpleCondicion, data$Pclass, sum) / tabla
+
+  # Reemplazar NA en probabilidades por 0
+  probabilidadCumple[is.na(probabilidadCumple)] <- 0
+
+  # Generar resultados para cada clase
+  resultados <- rep(NA, nrow(data))  # Inicializar vector de resultados
+  for (clase in names(tabla)) {
+    indicesClase <- which(data$Pclass == as.numeric(clase))
+    resultados[indicesClase] <- sample(c(0, 1), length(indicesClase), replace = TRUE,
+                                       prob = c(1 - probabilidadCumple[clase], probabilidadCumple[clase]))
+  }
+
+  return(resultados)
 }
 
-test.survived <- analisisDeTablas(train$Pclass, train$Survived)
-test.survived <- analisisDeTablas(train$Pclass, train$Sex)
+analizarMrsPorClase <- function(data) {
+  # Verificar si el nombre contiene "Mr." y si la edad es mayor a 14 años
+  cumpleCondicion <- grepl("Mrs\\.", data$Name) & data$Age > 14
+
+  # Crear una tabla con las clases existentes y la cantidad total de personas por clase
+  tabla <- table(data$Pclass)
+
+  # Calcular la probabilidad de cumplir la condición para cada clase
+  probabilidadCumple <- tapply(cumpleCondicion, data$Pclass, sum) / tabla
+
+  # Reemplazar NA en probabilidades por 0
+  probabilidadCumple[is.na(probabilidadCumple)] <- 0
+
+  # Generar resultados para cada clase
+  resultados <- rep(NA, nrow(data))  # Inicializar vector de resultados
+  for (clase in names(tabla)) {
+    indicesClase <- which(data$Pclass == as.numeric(clase))
+    resultados[indicesClase] <- sample(c(0, 1), length(indicesClase), replace = TRUE,
+                                       prob = c(1 - probabilidadCumple[clase], probabilidadCumple[clase]))
+  }
+
+  return(resultados)
+}
+
+
+test.survived$Sobrevivientes <- analisisDeTablas(train$Pclass, train$Survived, test.survived)
+test.survived$Genero <- analisisDeTablas(train$Pclass, train$Sex, test.survived)
+resultadosMr <- analizarMrPorClase(test.survived)
+test.survived$Mr <- resultadosMr
+resultadosMrs <- analizarMrsPorClase(test.survived)
+test.survived$Mrs <- resultadosMrs
 
 head(test.survived)
-
-
-####
-#Desglose de los cambios:
-#Clasificación de "Mr" y "Mrs":
-
-#Mr: Se identifican como hombres (Sex == "male") de 14 años o más (Age >= 14).
-#Mrs: Se identifican como mujeres (Sex == "female") con "Mrs." en el nombre.
-#Análisis de tablas:
-
-#Calcula las probabilidades condicionales para las combinaciones de las columnas proporcionadas (Pclass y Survived, Pclass y Sex).
-#Los resultados se agregan al DataFrame como columnas con nombres descriptivos.
-#Estructura limpia:
-
-#Uso de dplyr para transformar y agregar columnas al DataFrame con claridad y menos código redundante.
-#Compatibilidad con datos de prueba:
-
-#Se asegura que el conjunto de prueba mantenga las mismas columnas para futuras predicciones o análisis.
-#Resultado:
-#El DataFrame tendrá columnas adicionales:
-
-#Mr: Indica si un pasajero es "Mr".
-#Mrs: Indica si un pasajero es "Mrs".
-#Probabilidades calculadas por el análisis de tablas, como Survived_Clase1, Sexo_Clase1, etc.
-library(dplyr)
-
-# Cargar los datos
-train <- read.csv("train.csv", header = TRUE)
-test <- read.csv("test.csv", header = TRUE)
-
-# Agregar columnas iniciales para Survived, Mr, y Mrs al conjunto de prueba
-test <- test %>%
-  mutate(Survived = "None", Mr = 0, Mrs = 0)
-
-# Función para identificar "Mr" y "Mrs" en base a las condiciones dadas
-clasificar_personas <- function(data) {
-  data <- data %>%
-    mutate(
-      Mr = ifelse(Sex == "male" & Age >= 14, 1, 0), # Hombres >= 14 años
-      Mrs = ifelse(Sex == "female" & grepl("Mrs\\.", Name), 1, 0) # Mujeres con "Mrs." en el nombre
-    )
-  return(data)
-}
-
-# Aplicar la clasificación a los datos de entrenamiento y prueba
-train <- clasificar_personas(train)
-test <- clasificar_personas(test)
-
-# Función para realizar el análisis de tablas y agregar resultados como columnas
-analisisDeTablas <- function(data, columna1, columna2, nombre_columna) {
-  tabla <- table(columna1, columna2)
-  probabilidad <- prop.table(tabla, margin = 1)
-
-  # Agregar probabilidades al DataFrame
-  data <- data %>%
-    mutate(
-      paste0(nombre_columna, "_Clase1") = probabilidad[1, 2],
-      paste0(nombre_columna, "_Clase2") = probabilidad[2, 2],
-      paste0(nombre_columna, "_Clase3") = probabilidad[3, 2]
-    )
-
-  return(data)
-}
-
-# Agregar los resultados de análisis de tablas al DataFrame de entrenamiento
-train <- analisisDeTablas(train, train$Pclass, train$Survived, "Survived")
-train <- analisisDeTablas(train, train$Pclass, train$Sex, "Sexo")
-
-# Vista previa del DataFrame final
-head(train)
-head(test)
 
