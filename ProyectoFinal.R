@@ -205,5 +205,59 @@ dfStudents <- data.frame(
     Correo = c(correosMasc, correosFem)
   )
 
-set.seed(123)
+#set.seed(123)
 dfStudents$Edad <- sample(18:40, size = nrow(dfStudents), replace = T)
+
+###############################################################################################
+
+generarEstudiantes <- function(nombres_hombres, nombres_mujeres, apellidos, tamano_hombres, tamano_mujeres) {
+  # Generador de nombres completos
+  generadorNombre <- function(nombres, apellidos, tamanoDelVector) {
+    segundoNombre <- sample(nombres, tamanoDelVector, replace = TRUE)
+    primerNombre <- sample(nombres, tamanoDelVector, replace = TRUE)
+    segundoApellido <- sample(apellidos, tamanoDelVector, replace = TRUE)
+    primerApellido <- sample(apellidos, tamanoDelVector, replace = TRUE)
+    fullName <- gsub(" +", " ", paste(primerNombre, segundoNombre, primerApellido, segundoApellido))
+    return(fullName)
+  }
+
+  # Generador de correos electrónicos
+  generadorCorreos <- function(fullName) {
+    partes <- strsplit(fullName, " ")[[1]]
+    primer_nombre <- partes[1]
+    primer_apellido <- partes[length(partes) - 1]
+    segundo_apellido <- partes[length(partes)]
+    correo <- paste0(substr(primer_nombre, 1, 1),
+                     primer_apellido,
+                     substr(segundo_apellido, 1, 1),
+                     "@ipn.mx")
+    correo <- tolower(correo)
+    return(correo)
+  }
+
+  # Generar nombres, correos y géneros para hombres
+  nombresHombres <- generadorNombre(nombres_hombres, apellidos, tamano_hombres)
+  correosMasc <- sapply(nombresHombres, generadorCorreos)
+  generoMasculino <- rep("Masculino", length(correosMasc))
+
+  # Generar nombres, correos y géneros para mujeres
+  nombresMujeres <- generadorNombre(nombres_mujeres, apellidos, tamano_mujeres)
+  correosFem <- sapply(nombresMujeres, generadorCorreos)
+  generoFemenino <- rep("Femenino", length(correosFem))
+
+  # Crear el DataFrame
+  dfStudents <- data.frame(
+    Nombre = c(nombresHombres, nombresMujeres),
+    Genero = c(generoMasculino, generoFemenino),
+    Correo = c(correosMasc, correosFem)
+  )
+
+  # Agregar edades
+  dfStudents$Edad <- sample(18:40, size = nrow(dfStudents), replace = TRUE)
+
+  return(dfStudents)
+}
+
+dfStudents <- generarEstudiantes(nombres_hombres, nombres_mujeres, apellidos, 25, 25)
+
+print(dfStudents)
