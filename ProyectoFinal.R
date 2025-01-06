@@ -134,39 +134,6 @@ actividades_sociales <- c(
   "Noche de talentos"
 )
 
-connexion <- dbConnect(RSQLite::SQLite(),
-                       dbname = "ComunidadVirtual.db")
-
-tablas <- dbListTables(connexion)
-
-students_df <- tbl(connexion, "students") %>%
-  collect()
-
-dbExecute(connexion, "CREATE TABLE IF NOT EXISTS students (
-  id_student INTEGER PRIMARY KEY,
-  name TEXT,
-  age INTEGER,
-  gender TEXT,
-  email TEXT
-  );
-")
-
-"CREATE TABLE IF NOT EXISTS activities (
-  id_activities INTEGER PRIMARY KEY,
-  tilte TEXT,
-  date INTEGER,
-  duration INTERVAL,
-  type TEXT
-  );
-"
-
-"CREATE TABLE IF NOT EXISTS interactions (
-  id_interactions INTEGER PRIMARY KEY,
-  id_student INTEGER,
-  id_activities INTEGER,
-  );
-"
-
 generadorNombre <- function (nombres, apellidos, tamanoDelVector) {
   n <<- tamanoDelVector
   segundoNombre <- sample(nombres, n, replace = T)
