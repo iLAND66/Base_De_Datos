@@ -198,6 +198,8 @@ dfStudents$Duracion <- sapply(dfStudents$Fecha, generarDuracion)
 
 dfStudents$id_estudiantes <- 1:nrow(dfStudents)
 
+View(dfStudents)
+
 dfActividades <- data.frame(
   id_actividad = 1:length(actividades),
   Titulo = actividades,
@@ -206,12 +208,16 @@ dfActividades <- data.frame(
            rep("Social", length(actividades_sociales)))
 )
 
+View(dfActividades)
+
 num_interacciones <- 50
 dfInteracciones <- data.frame(
   id_estudiantes = sample(dfStudents$id_estudiantes, num_interacciones, replace = T),
   id_actividad = sample(dfActividades$id_actividad, num_interacciones, replace = T),
   Fecha = sample(seq.Date(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day"), num_interacciones, replace = T)
 )
+
+View(dfInteracciones)
 
 #Manipulacion
 #Mas de 5 Actividades
@@ -223,6 +229,7 @@ estudiantes_actividades <- dfInteracciones %>%
 estudiantes_con_mas_de_5 <- estudiantes_actividades %>%
   inner_join(dfStudents, by = "id_estudiantes") %>%
   select(Nombre, Genero, Correo, total_actividades)
+print(estudiantes_con_mas_de_5)
 
 #Actividades populares
 dfActividades <- dfActividades %>%
@@ -239,11 +246,12 @@ actividades_populares <- dfInteracciones %>%
   summarise(total_participantes = n(), .groups = "drop") %>%
   arrange(Tipo, desc(total_participantes))
 
+print(actividades_populares)
+
 #porcentaje de estudiantes por genero en cada tipo de actividad
 datos_completos <- dfInteracciones %>%
   inner_join(dfStudents, by = "id_estudiantes") %>%
-  inner_join(dfActividades, by = "id_actividad") %>%
-  select(id_estudiantes, Nombre, Genero, Edad, Titulo, Tipo)
+  inner_join(dfActividades, by = "id_actividad")
 
 porcentaje_genero <- datos_completos %>%
   group_by(Tipo, Genero) %>%
@@ -251,6 +259,8 @@ porcentaje_genero <- datos_completos %>%
   group_by(Tipo) %>%
   mutate(porcentaje = (total / sum(total)) * 100) %>%
   arrange(Tipo, desc(porcentaje))
+
+print(porcentaje_genero)
 
 
 #agregar columnas calculadas, como la duracion promedio de actividades por estudiante
@@ -271,6 +281,8 @@ duracion_promedio_estudiantes <- datos_completos %>%
     .groups = "drop"
   ) %>%
   arrange(desc(Duracion_promedio))
+
+print(duracion_promedio_estudiantes)
 
 #Graficos
 ggplot(duracion_promedio_estudiantes, aes(x = reorder(Nombre, total_actividades), y = total_actividades)) +
@@ -293,7 +305,6 @@ head(dfActividades)
 tabla_resumen <- dfInteracciones %>%
   inner_join(dfStudents, by = "id_estudiantes") %>%
   inner_join(dfActividades, by = "id_actividad") %>%
-  rename(Tipo = Tipo.y) %>% # Asegura que usamos el Tipo de actividades
   group_by(id_estudiantes) %>%
   summarise(
     Nombre = first(Nombre),
@@ -304,6 +315,8 @@ tabla_resumen <- dfInteracciones %>%
     sociales = sum(Tipo == "Social", na.rm = TRUE),
     academicas = sum(Tipo == "Academica", na.rm = TRUE)
   )
+
+print(tabla_resumen)
 
 #variable objetivo
 tabla_resumen <- tabla_resumen %>%
