@@ -321,7 +321,8 @@ print(tabla_resumen)
 #variable objetivo
 tabla_resumen <- tabla_resumen %>%
   mutate(
-    participa_recreativa = ifelse(recreativas > 0, 1, 0)
+    participa_recreativa = sample(c(0, 1), size = n(), replace = TRUE, prob = c(0.5, 0.5))
   )
 
 table(tabla_resumen$participa_recreativa)
+
