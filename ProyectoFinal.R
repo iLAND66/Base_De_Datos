@@ -1,12 +1,14 @@
-#instalamos los paquetes DBI y RSQLite
+#instalamos los paquetes
 install.packages("DBI")
-install.packages("RSQLite")
-install.packages("dplyr") #paquete necesaria pra el 2do ejercicio
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("caret")
 
-#llamamos a los paquetes DBI y RSQLite
+#llamamos a los paquetes
 library(DBI)
-library(RSQLite)
-library(dplyr) #llamamos el paquete
+library(dplyr)
+library(ggplot2)
+library(caret)
 
 nombres_hombres <- c(
   "Aaron", "Abel", "Abraham", "Adam", "Adrian", "Aiden", "Alan", "Albert", "Alec", "Alexander",
@@ -135,7 +137,7 @@ actividades_sociales <- c(
 )
 
 generadorNombre <- function (nombres, apellidos, tamanoDelVector) {
-  n <<- tamanoDelVector
+  n <- tamanoDelVector
   segundoNombre <- sample(nombres, n, replace = T)
   primerNombre <- sample(nombres, n, replace = T)
   segundoApellido <- sample(apellidos, n, replace = T)
@@ -181,13 +183,132 @@ start_date <- as.Date("2024-01-01")
 fechas <- seq(from = start_date, by = "year", length.out = nrow(dfStudents))
 dfStudents$Fecha <- sample(fechas, size = nrow(dfStudents), replace = T)
 
-dfStudents$Duracion <- sample(actividades, size = nrow(dfStudents), replace = T)
+#dfStudents$Tipo <- sample(actividades, size = nrow(dfStudents), replace = T)
 
 generarDuracion <- function (fecha){
   anio <- format(fecha, "%y")
   meses <- sample(0:5, 1)
   dias <- sample(0:30, 1)
-  fechaInicio <- as.Date(paste(anio, sample(1:12, 1), 1, sep = "-"))
-  fechaTermino <- fechaInicio + months(meses) + days(dias)
-  return(c(fechaInicio, fechaTermino))
+  fechaInicio <- fecha
+  fechaTermino <- fechaInicio + (meses * 30) + dias
+  return(paste(fechaInicio, "a", fechaTermino))
 }
+
+dfStudents$Duracion <- sapply(dfStudents$Fecha, generarDuracion)
+
+dfStudents$id_estudiantes <- 1:nrow(dfStudents)
+
+dfActividades <- data.frame(
+  id_actividad = 1:length(actividades),
+  Titulo = actividades,
+  Tipo = c(rep("Academica", length(actividades_academicas)),
+           rep("Recreativa", length(actividades_recreativas)),
+           rep("Social", length(actividades_sociales)))
+)
+
+num_interacciones <- 50
+dfInteracciones <- data.frame(
+  id_estudiantes = sample(dfStudents$id_estudiantes, num_interacciones, replace = T),
+  id_actividad = sample(dfActividades$id_actividad, num_interacciones, replace = T),
+  Fecha = sample(seq.Date(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day"), num_interacciones, replace = T)
+)
+
+#Manipulacion
+#Mas de 5 Actividades
+estudiantes_actividades <- dfInteracciones %>%
+  group_by(id_estudiantes) %>%
+  summarise(total_actividades = n()) %>%
+  filter(total_actividades > 5)
+
+estudiantes_con_mas_de_5 <- estudiantes_actividades %>%
+  inner_join(dfStudents, by = "id_estudiantes") %>%
+  select(Nombre, Genero, Correo, total_actividades)
+
+#Actividades populares
+dfActividades <- dfActividades %>%
+  mutate(Tipo = case_when(
+    Titulo %in% actividades_academicas ~ "Academica",
+    Titulo %in% actividades_recreativas ~ "Recreativa",
+    Titulo %in% actividades_sociales ~ "Social",
+    TRUE ~ "Otro"
+  ))
+
+actividades_populares <- dfInteracciones %>%
+  inner_join(dfActividades, by = "id_actividad") %>%
+  group_by(Tipo, Titulo) %>%
+  summarise(total_participantes = n(), .groups = "drop") %>%
+  arrange(Tipo, desc(total_participantes))
+
+#porcentaje de estudiantes por genero en cada tipo de actividad
+datos_completos <- dfInteracciones %>%
+  inner_join(dfStudents, by = "id_estudiantes") %>%
+  inner_join(dfActividades, by = "id_actividad") %>%
+  select(id_estudiantes, Nombre, Genero, Edad, Titulo, Tipo)
+
+porcentaje_genero <- datos_completos %>%
+  group_by(Tipo, Genero) %>%
+  summarise(total = n(), .groups = "drop") %>%
+  group_by(Tipo) %>%
+  mutate(porcentaje = (total / sum(total)) * 100) %>%
+  arrange(Tipo, desc(porcentaje))
+
+
+#agregar columnas calculadas, como la duracion promedio de actividades por estudiante
+#esta calculada la duracion en dias
+datos_completos <- datos_completos %>%
+  mutate(
+    Inicio = as.Date(sub(" a .*", "", Duracion)),
+    Termino = as.Date(sub(".* a ", "", Duracion)),
+    Duracion_dias = as.numeric(Termino - Inicio) 
+  )
+
+duracion_promedio_estudiantes <- datos_completos %>%
+  group_by(id_estudiantes) %>%
+  summarise(
+    Nombre = first(Nombre),
+    Duracion_promedio = mean(Duracion_dias, na.rm = TRUE),
+    total_actividades = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Duracion_promedio))
+
+#Graficos
+ggplot(duracion_promedio_estudiantes, aes(x = reorder(Nombre, total_actividades), y = total_actividades)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  coord_flip() +
+  labs(
+    title = "Total de Actividades por Estudiante",
+    x = "Estudiante",
+    y = "Número de Actividades"
+  ) +
+  theme_minimal()
+
+#tabla resumen
+
+head(dfInteracciones %>%
+       inner_join(dfStudents, by = "id_estudiantes") %>%
+       inner_join(dfActividades, by = "id_actividad"))
+head(dfActividades)
+
+tabla_resumen <- dfInteracciones %>%
+  inner_join(dfStudents, by = "id_estudiantes") %>%
+  inner_join(dfActividades, by = "id_actividad") %>%
+  rename(Tipo = Tipo.y) %>% # Asegura que usamos el Tipo de actividades
+  group_by(id_estudiantes) %>%
+  summarise(
+    Nombre = first(Nombre),
+    Genero = first(Genero),
+    Edad = first(Edad),
+    total_actividades = n(),
+    recreativas = sum(Tipo == "Recreativa", na.rm = TRUE),
+    sociales = sum(Tipo == "Social", na.rm = TRUE),
+    academicas = sum(Tipo == "Academica", na.rm = TRUE)
+  )
+
+#variable objetivo
+tabla_resumen <- tabla_resumen %>%
+  mutate(
+    participa_recreativa = ifelse(recreativas > 0, 1, 0)
+  )
+
+table(tabla_resumen$participa_recreativa)
