@@ -191,4 +191,3 @@ generarDuracion <- function (fecha){
   fechaTermino <- fechaInicio + months(meses) + days(dias)
   return(c(fechaInicio, fechaTermino))
 }
-
